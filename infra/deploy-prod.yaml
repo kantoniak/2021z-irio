@@ -1,0 +1,44 @@
+imports:
+  - path: apis.jinja
+
+resources:
+
+  # APIs
+  - name: enable-apis
+    type: apis.jinja
+    properties:
+      apis:
+        - sqladmin.googleapis.com
+
+  - name: services-instance  # This name will be unavailable for a week if you delete instance
+    type: sqladmin.v1beta4.instance
+    properties:
+      databaseVersion: POSTGRES_14
+      region: europe-central2
+      zone: europe-central2-a
+      settings:
+        tier: db-f1-micro  # See `gcloud sql tiers list` for a full list
+        dataDiskSizeGb: 10
+        dataDiskType: PD_HDD
+        storageAutoResize: false
+        availabilityType: ZONAL
+        backupConfiguration:
+          enabled: false
+
+  - name: services-db
+    type: sqladmin.v1beta4.database
+    properties:
+      name: services-db
+      instance: $(ref.services-instance.name)
+      charset: utf8
+
+  - name: services-user
+    type: sqladmin.v1beta4.user
+    metadata:
+      dependsOn:
+        - services-db
+    properties:
+      instance: $(ref.services-instance.name)
+      name: services_user  # FIXME: Handle credentials
+      password: services_password  # FIXME: Handle credentials
+      host: "%"

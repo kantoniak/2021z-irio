@@ -11,8 +11,14 @@ resources:
       sourceRepository:
         url: "https://source.developers.google.com/projects/{{ env['project'] }}/repos/{{ properties['repo'] }}/moveable-aliases/main/paths/{{ properties['repoPath'] }}"
       environmentVariables: {{ properties['environmentVariables'] }}
+      {% if properties['httpsSecurityLevel'] is defined %}
       httpsTrigger:
-        securityLevel: SECURE_ALWAYS
+        securityLevel: {{ properties['httpsSecurityLevel'] }}
+      {% elif properties['inputTopic'] is defined %}
+      eventTrigger:
+        eventType: google.pubsub.topic.publish
+        resource: projects/{{ env['project'] }}/topics/{{ properties['inputTopic'] }}
+      {% endif %}
       {% if properties['ingressSettings'] is defined %}
       ingressSettings: {{ properties['ingressSettings'] }}
       {% endif %}

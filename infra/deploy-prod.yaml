@@ -1,6 +1,7 @@
 imports:
   - path: apis.jinja
   - path: cloud-function.jinja
+  - path: pubsub-topic.jinja
 
 resources:
 
@@ -46,6 +47,12 @@ resources:
       password: services_password  # FIXME: Handle credentials
       host: "%"
 
+  # Pub/Sub
+  - name: pubsub-services-to-check
+    type: pubsub-topic.jinja
+    properties:
+      name: services-to-check
+
   # Cloud functions
   - name: func-WorkInProgress
     type: cloud-function.jinja
@@ -59,6 +66,7 @@ resources:
       repo: alerting-platform
       repoPath: WorkInProgress
       ingressSettings: ALLOW_ALL
+      httpsSecurityLevel: SECURE_ALWAYS
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)  # Can be read in the instance details page
         DB_USERNAME: services_user  # FIXME: Handle credentials

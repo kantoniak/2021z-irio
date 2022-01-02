@@ -1,0 +1,11 @@
+resources:
+  - name: "pubsub-{{ properties['name'] }}"
+    type: pubsub.v1.topic
+    properties:
+      topic: {{ properties['name'] }}
+
+outputs:
+- name: topicName
+  value: "{{ properties['name'] }}"
+- name: topicResourceName
+  value: "projects/{{ env['project'] }}/topics/{{ properties['name'] }}"

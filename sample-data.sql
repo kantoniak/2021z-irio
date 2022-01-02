@@ -1,0 +1,2 @@
+INSERT INTO "services" ("id", "name", "url", "primary_admin_email", "secondary_admin_email", "last_time_responsive", "being_worked_on", "primary_admin_key", "secondary_admin_key") VALUES
+    (1, 'example', 'https://example.com/', 'admin1@example.com', 'admin2@example.com', NULL, FALSE, '6d18c09e-f47b-41ba-a293-fd6c978c1e66', 'a16c337f-4bc5-4ab5-84b7-0e7f5cf52850');

@@ -1,0 +1,18 @@
+resources:
+
+  # Cloud Function
+  - name: func-{{ properties['function'] }}
+    type: gcp-types/cloudfunctions-v1:projects.locations.functions
+    properties:
+      parent: projects/{{ env['project'] }}/locations/{{ properties['region'] }}
+      function: {{ properties['function'] }}
+      entryPoint: entrypoint
+      runtime: python39
+      sourceRepository:
+        url: "https://source.developers.google.com/projects/{{ env['project'] }}/repos/{{ properties['repo'] }}/moveable-aliases/main/paths/{{ properties['repoPath'] }}"
+      environmentVariables: {{ properties['environmentVariables'] }}
+      httpsTrigger:
+        securityLevel: SECURE_ALWAYS
+      {% if properties['ingressSettings'] is defined %}
+      ingressSettings: {{ properties['ingressSettings'] }}
+      {% endif %}

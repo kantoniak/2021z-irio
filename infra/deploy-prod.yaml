@@ -1,5 +1,6 @@
 imports:
   - path: apis.jinja
+  - path: cloud-function.jinja
 
 resources:
 
@@ -42,3 +43,22 @@ resources:
       name: services_user  # FIXME: Handle credentials
       password: services_password  # FIXME: Handle credentials
       host: "%"
+
+  # Cloud functions
+  - name: func-WorkInProgress
+    type: cloud-function.jinja
+    metadata:
+      dependsOn:
+        - services-instance
+        - services-user
+    properties:
+      function: WorkInProgress
+      region: europe-central2
+      repo: alerting-platform
+      repoPath: WorkInProgress
+      ingressSettings: ALLOW_ALL
+      environmentVariables:
+        DB_CONN_NAME: $(ref.services-instance.connectionName)  # Can be read in the instance details page
+        DB_USERNAME: services_user  # FIXME: Handle credentials
+        DB_PASSWORD: services_password  # FIXME: Handle credentials
+        DB_DATABASE: services-db  # FIXME: Handle credentials

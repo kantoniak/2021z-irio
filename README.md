@@ -6,7 +6,7 @@
 2. Add remote and push this code to the repository.
 3. Deploy with Google Deployment Manager:
     ```
-    gcloud deployment-manager deployments update prod --config infra/deploy-prod.yaml
+    gcloud deployment-manager deployments create prod --config infra/deploy-prod.yaml
     ```
 4. Enable public access to `WorkInProgress`:
     ```
@@ -15,7 +15,21 @@
       --member="allUsers" \
       --role="roles/cloudfunctions.invoker"
     ```
-5. You may want to connect to database to create table and insert sample data from `sample-data.sql`:
-    ```
-    gcloud sql connect services-instance -d services-db -u <username>
-    ```
+
+### Development
+
+To update deployment (add new objects etc.), use the following:
+```
+gcloud deployment-manager deployments update prod --config infra/deploy-prod.yaml
+```
+Note that some changes are irreversible!
+
+You may want to connect to database to create table and insert sample data from `sample-data.sql`:
+```
+gcloud sql connect services-instance -d services-db -u <username>
+```
+
+To force checking a service, push its ID to the pubsub topic:
+```
+gcloud pubsub topics publish services-to-check --message="<service-id>"
+```

@@ -14,6 +14,7 @@ resources:
         - logging.googleapis.com
         - sqladmin.googleapis.com
 
+  # Cloud SQL
   - name: services-instance  # This name will be unavailable for a week if you delete instance
     type: sqladmin.v1beta4.instance
     properties:
@@ -54,6 +55,26 @@ resources:
       name: services-to-check
 
   # Cloud functions
+  - name: func-MonitorSpecificService
+    type: cloud-function.jinja
+    metadata:
+      dependsOn:
+        - services-instance
+        - services-user
+    properties:
+      function: MonitorSpecificService
+      region: europe-central2
+      repo: alerting-platform
+      repoPath: MonitorSpecificService
+      inputTopic: $(ref.pubsub-services-to-check.topicName)
+      environmentVariables:
+        DB_CONN_NAME: $(ref.services-instance.connectionName)
+        DB_USERNAME: services_user  # FIXME: Handle credentials
+        DB_PASSWORD: services_password  # FIXME: Handle credentials
+        DB_DATABASE: services-db  # FIXME: Handle credentials
+        REQUEST_TIMEOUT_SEC: "3"
+        ALERTING_WINDOW_SEC: "10"
+
   - name: func-WorkInProgress
     type: cloud-function.jinja
     metadata:
@@ -68,7 +89,7 @@ resources:
       ingressSettings: ALLOW_ALL
       httpsSecurityLevel: SECURE_ALWAYS
       environmentVariables:
-        DB_CONN_NAME: $(ref.services-instance.connectionName)  # Can be read in the instance details page
+        DB_CONN_NAME: $(ref.services-instance.connectionName)
         DB_USERNAME: services_user  # FIXME: Handle credentials
         DB_PASSWORD: services_password  # FIXME: Handle credentials
         DB_DATABASE: services-db  # FIXME: Handle credentials

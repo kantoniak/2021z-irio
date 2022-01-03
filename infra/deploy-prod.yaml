@@ -10,10 +10,11 @@ resources:
     type: apis.jinja
     properties:
       apis:
+        - cloudbuild.googleapis.com
         - cloudfunctions.googleapis.com
         - logging.googleapis.com
-        - sqladmin.googleapis.com
         - pubsub.googleapis.com
+        - sqladmin.googleapis.com
 
   # Cloud SQL
   - name: services-instance  # This name will be unavailable for a week if you delete instance

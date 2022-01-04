@@ -71,7 +71,6 @@ CREATE TABLE IF NOT EXISTS "services" (
     "last_time_responsive" TIMESTAMP NULL,
     "being_worked_on" BOOLEAN NOT NULL DEFAULT FALSE,
     "primary_admin_key" UUID NULL,
-    "secondary_admin_key" UUID NULL,
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
@@ -98,14 +97,11 @@ def handle_service_down(service, conn):
             logger.info(f'Service "{service_name}" down.')
 
             primary_key = str(uuid.uuid4())
-            secondary_key = str(uuid.uuid4())
-
             conn.execute(
-                text("UPDATE services SET being_worked_on = FALSE, primary_admin_key = :primary_key, secondary_admin_key = :secondary_key WHERE id = :id"),
+                text("UPDATE services SET being_worked_on = FALSE, primary_admin_key = :primary_key WHERE id = :id"),
                 {
                     'id': service['id'],
-                    'primary_key': primary_key,
-                    'secondary_key': secondary_key
+                    'primary_key': primary_key
                 }
             )
 

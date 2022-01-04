@@ -56,7 +56,6 @@ CREATE TABLE IF NOT EXISTS "services" (
     "last_time_responsive" TIMESTAMP NULL,
     "being_worked_on" BOOLEAN NOT NULL DEFAULT FALSE,
     "primary_admin_key" UUID NULL,
-    "secondary_admin_key" UUID NULL,
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
@@ -88,24 +87,21 @@ def entrypoint(request):
         initialize_db(conn)
 
         # Fetch matching service
-        entry = conn.execute(
-            text("SELECT name, primary_admin_email, secondary_admin_email, primary_admin_key, secondary_admin_key FROM services WHERE :key IN (primary_admin_key, secondary_admin_key)"),
+        service = conn.execute(
+            text("SELECT name, primary_admin_email FROM services WHERE primary_admin_key = :key"),
             { 'key': key }
         ).fetchone()
         
-        if not entry:
+        if not service:
             return render_response('No service with such key')
 
-        admin_email = None
-        if entry['primary_admin_key'] == key:
-            admin_email = entry['primary_admin_email']
-        else:
-            admin_email = entry['secondary_admin_email']
-        logging.info(f'Admin {admin_email} acknowledged downtime of service {entry.name}')
+        service_name = service['name']
+        admin_email = service['primary_admin_email']
+        logging.info(f'Admin {admin_email} acknowledged downtime of service {service_name}')
 
         # Mark as being worked on
         conn.execute(
-            text("UPDATE services SET being_worked_on = TRUE WHERE :key IN (primary_admin_key, secondary_admin_key)"),
+            text("UPDATE services SET being_worked_on = TRUE WHERE primary_admin_key = :key"),
             { 'key': key }
         )
         return render_response('Downtime acknowledged')

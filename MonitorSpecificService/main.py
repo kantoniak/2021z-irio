@@ -8,6 +8,8 @@ import time
 import uuid
 from google.cloud import logging as cloudlogging
 from sqlalchemy.sql import text
+from mailjet_rest import Client
+
 
 cloudlogging.Client().setup_logging()
 logger = logging.getLogger()
@@ -38,6 +40,30 @@ if ALERTING_WINDOW_SEC is None:
   raise RuntimeError('Missing environment variable: ALERTING_WINDOW_SEC')
 else:
   ALERTING_WINDOW_SEC = int(ALERTING_WINDOW_SEC)
+
+api_key = '13bde1f003f14dfe019284c8839ec9fa' # TODO : fix this
+api_secret = '4e64b4ac3672eec18b0fbdc4d79a1817' # TODO : fix this
+MY_MAIL = "automatedmailer@protonmail.com"
+MAILJET = Client(auth=(api_key, api_secret), version='v3.1')
+def send_mail(recipient, service_name):
+    data = {
+        "Messages": [
+            {
+                "From": {
+                    "Email": MY_MAIL,
+                    "Name": "Alerting platform automatic mailer",
+                },
+                "To": [{"Email": recipient, "Name": recipient}],
+                "Subject": "Warning, service is down",
+                "TextPart": "Warning, service {} is down!".format(service_name),
+                "HTMLPart": "",
+                "CustomID": "",
+            }
+        ]
+    }
+
+    result = MAILJET.send.create(data=data)
+    return result.json()
 
 
 def init_pool(conn_name, username, password, database):
@@ -104,10 +130,8 @@ def handle_service_down(service, conn):
                     'primary_key': primary_key
                 }
             )
-
-            # TODO: Send email to primary admin (service['primary_admin_email'])
+            send_mail(service['primary_admin_email'], service_name)
             # TODO: Schedule task for secondary admin
-
 
 def entrypoint(event, _):
 

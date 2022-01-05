@@ -22,3 +22,9 @@ resources:
       {% if properties['ingressSettings'] is defined %}
       ingressSettings: {{ properties['ingressSettings'] }}
       {% endif %}
+    
+outputs:
+    - name: funcRegion
+      value: {{ properties['region'] }}
+    - name: funcName
+      value: {{ properties['function'] }}  

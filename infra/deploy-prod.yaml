@@ -15,6 +15,7 @@ resources:
         - logging.googleapis.com
         - pubsub.googleapis.com
         - sqladmin.googleapis.com
+        - cloudtasks.googleapis.com
 
   # Cloud SQL
   - name: services-instance  # This name will be unavailable for a week if you delete instance
@@ -55,14 +56,36 @@ resources:
     type: pubsub-topic.jinja
     properties:
       name: services-to-check
+  
+  # Cloud task queue
+  # Here should be a cloud task queue setup, but since isn't supported as of today(06.01.2022) we can't do that
+  # https://cloud.google.com/deployment-manager/docs/configuration/supported-gcp-types
+  # https://cloud.google.com/deployment-manager/docs/configuration/supported-resource-types
 
   # Cloud functions
+  - name: func-InformSecondaryAdmin
+    type: cloud-function.jinja
+    metadata:
+      dependsOn:
+        - services-instance
+        - services-user
+    properties:
+      function: InformSecondaryAdmin
+      region: europe-central2
+      repo: alerting-platform
+      repoPath: InformSecondaryAdmin
+      ingressSettings: ALLOW_ALL # FIXME : handle it better
+      httpsSecurityLevel: SECURE_ALWAYS
+      environmentVariables:
+        something: something
+
   - name: func-MonitorSpecificService
     type: cloud-function.jinja
     metadata:
       dependsOn:
         - services-instance
         - services-user
+        - func-InformSecondaryAdmin
     properties:
       function: MonitorSpecificService
       region: europe-central2
@@ -76,6 +99,11 @@ resources:
         DB_DATABASE: services-db  # FIXME: Handle credentials
         REQUEST_TIMEOUT_SEC: "3"
         ALERTING_WINDOW_SEC: "10"
+        QUEUE_NAME: scheduled-tasks-queue
+        REGION: $(ref.func-MonitorSpecificService.funcRegion)
+        FUNC_TO_CALL: $(ref.func-InformSecondaryAdmin.funcName)
+        ALLOWED_RESPONSE_TIME: "60" # In seconds
+        PROJECT_NAME: $(ref.pubsub-services-to-check.projectId)
 
   - name: func-WorkInProgress
     type: cloud-function.jinja

@@ -9,3 +9,5 @@ outputs:
   value: "{{ properties['name'] }}"
 - name: topicResourceName
   value: "projects/{{ env['project'] }}/topics/{{ properties['name'] }}"
+- name: projectId
+  value: "{{ env['project'] }}"

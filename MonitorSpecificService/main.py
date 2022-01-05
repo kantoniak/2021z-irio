@@ -9,6 +9,10 @@ import uuid
 from google.cloud import logging as cloudlogging
 from sqlalchemy.sql import text
 from mailjet_rest import Client
+from google.cloud import tasks_v2
+import json
+
+
 
 
 cloudlogging.Client().setup_logging()
@@ -18,7 +22,12 @@ DB_CONN_NAME = os.getenv('DB_CONN_NAME')
 DB_USERNAME = os.getenv('DB_USERNAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_DATABASE = os.getenv('DB_DATABASE')
+QUEUE_NAME = os.getenv('QUEUE_NAME')
+REGION = os.getenv('REGION')
+FUNC_TO_CALL = os.getenv('FUNC_TO_CALL')
+PROJECT = os.getenv('PROJECT_NAME')
 
+ALLOWED_RESPONSE_TIME = os.getenv('ALLOWED_RESPONSE_TIME')
 REQUEST_TIMEOUT_SEC = os.getenv('REQUEST_TIMEOUT_SEC')
 ALERTING_WINDOW_SEC = os.getenv('ALERTING_WINDOW_SEC')
 
@@ -30,6 +39,20 @@ if DB_PASSWORD is None:
     raise RuntimeError('Missing environment variable: DB_PASSWORD')
 if DB_DATABASE is None:
     raise RuntimeError('Missing environment variable: DB_DATABASE')
+if QUEUE_NAME is None:
+    raise RuntimeError('Missing environment variable: QUEUE_NAME')
+if REGION is None:
+    raise RuntimeError('Missing environment variable: REGION')
+if FUNC_TO_CALL is None:
+    raise RuntimeError('Missing environment variable: FUNC_TO_CALL')
+if PROJECT is None:
+    raise RuntimeError('Missing environment variable: PROJECT')
+
+
+if ALLOWED_RESPONSE_TIME is None:
+    raise RuntimeError('Missing environment variable: ALLOWED_RESPONSE_TIME')
+else:
+    ALLOWED_RESPONSE_TIME = int(ALLOWED_RESPONSE_TIME)
 
 if REQUEST_TIMEOUT_SEC is None:
   raise RuntimeError('Missing environment variable: REQUEST_TIMEOUT_SEC')
@@ -64,6 +87,28 @@ def send_mail(recipient, service_name):
 
     result = MAILJET.send.create(data=data)
     return result.json()
+
+def schedule_task(secondary_admin_email, service_name, delay):
+    # https://cloud.google.com/tasks/docs/samples/cloud-tasks-taskqueues-new-task
+    # https://cloud.google.com/tasks/docs/creating-http-target-tasks
+    client = tasks_v2.CloudTasksClient()
+    parent = client.queue_path(PROJECT, REGION, QUEUE_NAME)
+
+    task = {
+        'http_request': {
+            "http_method": tasks_v2.HttpMethod.POST,
+            "url": "https://" + REGION + "-" + PROJECT + ".cloudfunctions.net/" + FUNC_TO_CALL,
+            'headers': {
+                "Content-Type": "application/json"
+            },
+            "oidc_token": {
+                "service_account_email": PROJECT + "@appspot.gserviceaccount.com"
+            },
+            "body": json.dumps({"secondary_admin_email" : secondary_admin_email, "service_name" : service_name}).encode("utf-8"),
+        },
+        'schedule_time': datetime.datetime.now() + datetime.timedelta(seconds=delay) 
+    }
+    return client.create_task(request={"parent": parent, "task": task})
 
 
 def init_pool(conn_name, username, password, database):
@@ -100,6 +145,26 @@ CREATE TABLE IF NOT EXISTS "services" (
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
+# FIXME: Move to MonitorAllServices once created
+def initialize_task_queue():
+    # https://cloud.google.com/tasks/docs/samples/cloud-tasks-create-queue#cloud_tasks_create_queue-python
+    client = tasks_v2.CloudTasksClient()
+
+    # Construct the fully qualified location path.
+    parent = f"projects/{PROJECT}/locations/{REGION}"
+
+    all_queues = client.list_queues(request={"parent": parent})
+    for queue in all_queues:
+        if queue.name.split("/")[-1] == QUEUE_NAME:
+            return None
+
+    # Construct the create queue request.
+    queue = {"name": client.queue_path(PROJECT, REGION, QUEUE_NAME)}
+    # Use the client to create the queue.
+    response = client.create_queue(request={"parent": parent, "queue": queue})
+
+    return response
+
 
 def handle_service_up(service, conn):
     conn.execute(
@@ -131,9 +196,10 @@ def handle_service_down(service, conn):
                 }
             )
             send_mail(service['primary_admin_email'], service_name)
-            # TODO: Schedule task for secondary admin
+            schedule_task(service['secondary_admin_email'], service_name, ALLOWED_RESPONSE_TIME)
 
 def entrypoint(event, _):
+    initialize_task_queue()
 
     # Decode incoming ID
     if 'data' in event:
@@ -154,7 +220,7 @@ def entrypoint(event, _):
 
         # Fetch service details
         service = conn.execute(
-            text("SELECT id, name, url, last_time_responsive, primary_admin_email FROM services WHERE id = :id"),
+            text("SELECT id, name, url, last_time_responsive, primary_admin_email, secondary_admin_email FROM services WHERE id = :id"),
             { 'id': service_id }
         ).fetchone()
 

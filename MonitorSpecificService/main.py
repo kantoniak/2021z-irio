@@ -88,7 +88,7 @@ def send_mail(recipient, service_name):
     result = MAILJET.send.create(data=data)
     return result.json()
 
-def schedule_task(secondary_admin_email, service_name, delay):
+def schedule_task(service_id, delay):
     # https://cloud.google.com/tasks/docs/samples/cloud-tasks-taskqueues-new-task
     # https://cloud.google.com/tasks/docs/creating-http-target-tasks
     client = tasks_v2.CloudTasksClient()
@@ -104,7 +104,7 @@ def schedule_task(secondary_admin_email, service_name, delay):
             "oidc_token": {
                 "service_account_email": PROJECT + "@appspot.gserviceaccount.com"
             },
-            "body": json.dumps({"secondary_admin_email" : secondary_admin_email, "service_name" : service_name}).encode("utf-8"),
+            "body": json.dumps({"service_id" : service_id}).encode("utf-8"),
         },
         'schedule_time': datetime.datetime.now() + datetime.timedelta(seconds=delay) 
     }
@@ -186,17 +186,18 @@ def handle_service_down(service, conn):
         if new_incident:
             service_name = service['name']
             logger.info(f'Service "{service_name}" down.')
+            service_id = service['id']
 
             primary_key = str(uuid.uuid4())
             conn.execute(
                 text("UPDATE services SET being_worked_on = FALSE, primary_admin_key = :primary_key WHERE id = :id"),
                 {
-                    'id': service['id'],
+                    'id': service_id,
                     'primary_key': primary_key
                 }
             )
             send_mail(service['primary_admin_email'], service_name)
-            schedule_task(service['secondary_admin_email'], service_name, ALLOWED_RESPONSE_TIME)
+            schedule_task(service_id, ALLOWED_RESPONSE_TIME)
 
 def entrypoint(event, _):
     initialize_task_queue()

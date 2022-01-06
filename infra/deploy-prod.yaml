@@ -77,7 +77,10 @@ resources:
       ingressSettings: ALLOW_ALL # FIXME : handle it better
       httpsSecurityLevel: SECURE_ALWAYS
       environmentVariables:
-        something: something
+        DB_CONN_NAME: $(ref.services-instance.connectionName)
+        DB_USERNAME: services_user  # FIXME: Handle credentials
+        DB_PASSWORD: services_password  # FIXME: Handle credentials
+        DB_DATABASE: services-db  # FIXME: Handle credentials
 
   - name: func-MonitorSpecificService
     type: cloud-function.jinja

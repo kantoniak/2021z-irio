@@ -10,6 +10,7 @@ from google.cloud import logging as cloudlogging
 from sqlalchemy.sql import text
 from mailjet_rest import Client
 from google.cloud import tasks_v2
+from google.cloud import pubsub_v1
 import json
 
 cloudlogging.Client().setup_logging()
@@ -22,6 +23,7 @@ DB_DATABASE = os.getenv('DB_DATABASE')
 QUEUE_NAME = os.getenv('QUEUE_NAME')
 REGION = os.getenv('REGION')
 PROJECT = os.getenv('PROJECT_NAME')
+PUBSUB_TOPIC = os.getenv('PUBSUB_TOPIC')
 
 if DB_CONN_NAME is None:
     raise RuntimeError('Missing environment variable: DB_CONN_NAME')
@@ -37,6 +39,7 @@ if REGION is None:
     raise RuntimeError('Missing environment variable: REGION')
 if PROJECT is None:
     raise RuntimeError('Missing environment variable: PROJECT')
+
 
 def init_pool(conn_name, username, password, database):
     pool = sqlalchemy.create_engine(
@@ -93,9 +96,9 @@ def initialize_task_queue():
     return response
 
 
-def handle_service(service_id):
-    # Send info to pub/sub
-    pass
+def handle_service(service_id, publisher, topic_name):
+    message = str(service_id).encode('utf-8')
+    future = publisher.publish(topic_name, message)
 
 
 def entrypoint(event, _):
@@ -117,6 +120,12 @@ def entrypoint(event, _):
             text("SELECT id FROM services")
         ).fetchall()
 
+        publisher = pubsub_v1.PublisherClient()
+        topic_name = 'projects/{project_id}/topics/{topic}'.format(
+            project_id=PROJECT,
+            topic=PUBSUB_TOPIC,
+        )
+
         for service in services:
             service_id = service['id']
-            handle_service(service_id)
+            handle_service(service_id, publisher, topic_name)

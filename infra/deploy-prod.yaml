@@ -92,10 +92,10 @@ resources:
         - services-user
         - func-InformSecondaryAdmin
     properties:
-      function: MonitorAllServices
+      function: MonitorSpecificService
       region: europe-central2
       repo: alerting-platform
-      repoPath: MonitorAllServices
+      repoPath: MonitorSpecificService
       inputTopic: $(ref.pubsub-services-to-check.topicName)
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
@@ -119,10 +119,10 @@ resources:
         - services-user
         - pubsub-services-to-check
     properties:
-      function: MonitorSpecificService
+      function: MonitorAllServices
       region: europe-central2
       repo: alerting-platform
-      repoPath: MonitorSpecificService
+      repoPath: MonitorAllServices
       inputTopic: $(ref.pubsub-all-services-checks.topicName)
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)

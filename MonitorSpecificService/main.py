@@ -145,27 +145,6 @@ CREATE TABLE IF NOT EXISTS "services" (
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
-# FIXME: Move to MonitorAllServices once created
-def initialize_task_queue():
-    # https://cloud.google.com/tasks/docs/samples/cloud-tasks-create-queue#cloud_tasks_create_queue-python
-    client = tasks_v2.CloudTasksClient()
-
-    # Construct the fully qualified location path.
-    parent = f"projects/{PROJECT}/locations/{REGION}"
-
-    all_queues = client.list_queues(request={"parent": parent})
-    for queue in all_queues:
-        if queue.name.split("/")[-1] == QUEUE_NAME:
-            return None
-
-    # Construct the create queue request.
-    queue = {"name": client.queue_path(PROJECT, REGION, QUEUE_NAME)}
-    # Use the client to create the queue.
-    response = client.create_queue(request={"parent": parent, "queue": queue})
-
-    return response
-
-
 def handle_service_up(service, conn):
     conn.execute(
         text("UPDATE services SET last_time_responsive = :datetime WHERE id = :id"),
@@ -199,8 +178,6 @@ def handle_service_down(service, conn):
             schedule_task(service['secondary_admin_email'], service_name, ALLOWED_RESPONSE_TIME)
 
 def entrypoint(event, _):
-    initialize_task_queue()
-
     # Decode incoming ID
     if 'data' in event:
         service_id = int(base64.b64decode(event['data']).decode('utf-8'))

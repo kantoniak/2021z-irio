@@ -22,12 +22,9 @@ DB_CONN_NAME = os.getenv('DB_CONN_NAME')
 DB_USERNAME = os.getenv('DB_USERNAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_DATABASE = os.getenv('DB_DATABASE')
+QUEUE_NAME = os.getenv('QUEUE_NAME')
 REGION = os.getenv('REGION')
 PROJECT = os.getenv('PROJECT_NAME')
-
-ALLOWED_RESPONSE_TIME = os.getenv('ALLOWED_RESPONSE_TIME')
-REQUEST_TIMEOUT_SEC = os.getenv('REQUEST_TIMEOUT_SEC')
-ALERTING_WINDOW_SEC = os.getenv('ALERTING_WINDOW_SEC')
 
 if DB_CONN_NAME is None:
     raise RuntimeError('Missing environment variable: DB_CONN_NAME')
@@ -37,34 +34,12 @@ if DB_PASSWORD is None:
     raise RuntimeError('Missing environment variable: DB_PASSWORD')
 if DB_DATABASE is None:
     raise RuntimeError('Missing environment variable: DB_DATABASE')
+if QUEUE_NAME is None:
+    raise RuntimeError('Missing environment variable: QUEUE_NAME')
 if REGION is None:
     raise RuntimeError('Missing environment variable: REGION')
 if PROJECT is None:
     raise RuntimeError('Missing environment variable: PROJECT')
-
-api_key = '13bde1f003f14dfe019284c8839ec9fa' # TODO : fix this
-api_secret = '4e64b4ac3672eec18b0fbdc4d79a1817' # TODO : fix this
-MY_MAIL = "automatedmailer@protonmail.com"
-MAILJET = Client(auth=(api_key, api_secret), version='v3.1')
-def send_mail(recipient, service_name):
-    data = {
-        "Messages": [
-            {
-                "From": {
-                    "Email": MY_MAIL,
-                    "Name": "Alerting platform automatic mailer",
-                },
-                "To": [{"Email": recipient, "Name": recipient}],
-                "Subject": "Warning, service is down",
-                "TextPart": "Warning, service {} is down!".format(service_name),
-                "HTMLPart": "",
-                "CustomID": "",
-            }
-        ]
-    }
-
-    result = MAILJET.send.create(data=data)
-    return result.json()
 
 def schedule_task(secondary_admin_email, service_name, delay):
     # https://cloud.google.com/tasks/docs/samples/cloud-tasks-taskqueues-new-task
@@ -123,7 +98,6 @@ CREATE TABLE IF NOT EXISTS "services" (
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
-# FIXME: Move to MonitorAllServices once created
 def initialize_task_queue():
     # https://cloud.google.com/tasks/docs/samples/cloud-tasks-create-queue#cloud_tasks_create_queue-python
     client = tasks_v2.CloudTasksClient()

@@ -117,7 +117,6 @@ resources:
         - func-MonitorSpecificService
         - services-instance
         - services-user
-        - func-InformSecondaryAdmin
     properties:
       function: MonitorSpecificService
       region: europe-central2
@@ -129,6 +128,7 @@ resources:
         DB_USERNAME: services_user  # FIXME: Handle credentials
         DB_PASSWORD: services_password  # FIXME: Handle credentials
         DB_DATABASE: services-db  # FIXME: Handle credentials
+        QUEUE_NAME: scheduled-tasks-queue
         REGION: $(ref.func-MonitorSpecificService.funcRegion)
         PROJECT_NAME: $(ref.pubsub-all-services-checks.projectId)
 

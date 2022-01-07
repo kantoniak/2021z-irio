@@ -12,9 +12,6 @@ from mailjet_rest import Client
 from google.cloud import tasks_v2
 import json
 
-
-
-
 cloudlogging.Client().setup_logging()
 logger = logging.getLogger()
 
@@ -40,29 +37,6 @@ if REGION is None:
     raise RuntimeError('Missing environment variable: REGION')
 if PROJECT is None:
     raise RuntimeError('Missing environment variable: PROJECT')
-
-def schedule_task(secondary_admin_email, service_name, delay):
-    # https://cloud.google.com/tasks/docs/samples/cloud-tasks-taskqueues-new-task
-    # https://cloud.google.com/tasks/docs/creating-http-target-tasks
-    client = tasks_v2.CloudTasksClient()
-    parent = client.queue_path(PROJECT, REGION, QUEUE_NAME)
-
-    task = {
-        'http_request': {
-            "http_method": tasks_v2.HttpMethod.POST,
-            "url": "https://" + REGION + "-" + PROJECT + ".cloudfunctions.net/" + FUNC_TO_CALL,
-            'headers': {
-                "Content-Type": "application/json"
-            },
-            "oidc_token": {
-                "service_account_email": PROJECT + "@appspot.gserviceaccount.com"
-            },
-            "body": json.dumps({"secondary_admin_email" : secondary_admin_email, "service_name" : service_name}).encode("utf-8"),
-        },
-        'schedule_time': datetime.datetime.now() + datetime.timedelta(seconds=delay) 
-    }
-    return client.create_task(request={"parent": parent, "task": task})
-
 
 def init_pool(conn_name, username, password, database):
     pool = sqlalchemy.create_engine(
@@ -98,6 +72,7 @@ CREATE TABLE IF NOT EXISTS "services" (
     CONSTRAINT "services_pk" PRIMARY KEY (id)
 );""")
 
+
 def initialize_task_queue():
     # https://cloud.google.com/tasks/docs/samples/cloud-tasks-create-queue#cloud_tasks_create_queue-python
     client = tasks_v2.CloudTasksClient()
@@ -118,46 +93,13 @@ def initialize_task_queue():
     return response
 
 
-def handle_service_up(service, conn):
-    conn.execute(
-        text("UPDATE services SET last_time_responsive = :datetime WHERE id = :id"),
-        {
-            'id': service['id'],
-            'datetime': datetime.datetime.now()
-        }
-    )
+def handle_service(service_id):
+    # Send info to pub/sub
+    pass
 
-
-def handle_service_down(service, conn):
-    time_now = datetime.datetime.now()
-
-    since_last_check = (time_now - service['last_time_responsive']).total_seconds()
-    if since_last_check > ALERTING_WINDOW_SEC:
-        new_incident = True  # FIXME: How do we know current downtime had/had not been detected?
-
-        if new_incident:
-            service_name = service['name']
-            logger.info(f'Service "{service_name}" down.')
-
-            primary_key = str(uuid.uuid4())
-            conn.execute(
-                text("UPDATE services SET being_worked_on = FALSE, primary_admin_key = :primary_key WHERE id = :id"),
-                {
-                    'id': service['id'],
-                    'primary_key': primary_key
-                }
-            )
-            send_mail(service['primary_admin_email'], service_name)
-            schedule_task(service['secondary_admin_email'], service_name, ALLOWED_RESPONSE_TIME)
 
 def entrypoint(event, _):
     initialize_task_queue()
-
-    # Decode incoming ID
-    if 'data' in event:
-        service_id = int(base64.b64decode(event['data']).decode('utf-8'))
-    else:
-        raise RuntimeError('Service ID missing.')
 
     # Init connection
     db = init_pool(
@@ -171,35 +113,10 @@ def entrypoint(event, _):
         initialize_db(conn)
 
         # Fetch service details
-        service = conn.execute(
-            text("SELECT id, name, url, last_time_responsive, primary_admin_email, secondary_admin_email FROM services WHERE id = :id"),
-            { 'id': service_id }
-        ).fetchone()
+        services = conn.execute(
+            text("SELECT id FROM services")
+        ).fetchall()
 
-        if not service:
-            raise RuntimeError(f'No service with ID {service_id}.')
-
-        url = service['url']
-        name = service['name']
-
-        if not service['last_time_responsive']:
-            logger.warn(f'Service "{name}" has not been up yet.')
-            return
-
-        # Check if service up
-        try:
-            response = requests.get(
-                url,
-                allow_redirects=True,
-                timeout=(REQUEST_TIMEOUT_SEC, REQUEST_TIMEOUT_SEC),
-            )
-
-            if response.status_code < 200 or 300 <= response.status_code:
-                logger.info(f'Service "{name}": request to {url} returned HTTP {response.status_code}.')
-                handle_service_down(service, conn)
-            else:
-                handle_service_up(service, conn)
-
-        except requests.exceptions.Timeout:
-            logger.info(f'Service "{name}": request to {url} timed out after {REQUEST_TIMEOUT_SEC} s.')
-            handle_service_down(service, conn)
+        for service in services:
+            service_id = service['id']
+            handle_service(service_id)

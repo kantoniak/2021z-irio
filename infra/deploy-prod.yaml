@@ -52,6 +52,11 @@ resources:
       host: "%"
 
   # Pub/Sub
+  - name: pubsub-all-services-checks
+    type: pubsub-topic.jinja
+    properties:
+      name: all-services-checks
+
   - name: pubsub-services-to-check
     type: pubsub-topic.jinja
     properties:
@@ -87,10 +92,10 @@ resources:
         - services-user
         - func-InformSecondaryAdmin
     properties:
-      function: MonitorSpecificService
+      function: MonitorAllServices
       region: europe-central2
       repo: alerting-platform
-      repoPath: MonitorSpecificService
+      repoPath: MonitorAllServices
       inputTopic: $(ref.pubsub-services-to-check.topicName)
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
@@ -104,6 +109,28 @@ resources:
         FUNC_TO_CALL: $(ref.func-InformSecondaryAdmin.funcName)
         ALLOWED_RESPONSE_TIME: "60" # In seconds
         PROJECT_NAME: $(ref.pubsub-services-to-check.projectId)
+
+  - name: func-MonitorAllServices
+    type: cloud-function.jinja
+    metadata:
+      dependsOn:
+        - func-MonitorSpecificService
+        - services-instance
+        - services-user
+        - func-InformSecondaryAdmin
+    properties:
+      function: MonitorSpecificService
+      region: europe-central2
+      repo: alerting-platform
+      repoPath: MonitorSpecificService
+      inputTopic: $(ref.pubsub-all-services-checks.topicName)
+      environmentVariables:
+        DB_CONN_NAME: $(ref.services-instance.connectionName)
+        DB_USERNAME: services_user  # FIXME: Handle credentials
+        DB_PASSWORD: services_password  # FIXME: Handle credentials
+        DB_DATABASE: services-db  # FIXME: Handle credentials
+        REGION: $(ref.func-MonitorSpecificService.funcRegion)
+        PROJECT_NAME: $(ref.pubsub-all-services-checks.projectId)
 
   - name: func-WorkInProgress
     type: cloud-function.jinja

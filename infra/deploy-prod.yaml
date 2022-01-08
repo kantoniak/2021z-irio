@@ -132,7 +132,7 @@ resources:
         QUEUE_NAME: scheduled-tasks-queue
         REGION: $(ref.func-MonitorSpecificService.funcRegion)
         PROJECT_NAME: $(ref.pubsub-all-services-checks.projectId)
-        PUBSUB_TOPIC: $(ref.pubsub-services-to-check.projectId)
+        PUBSUB_TOPIC: $(ref.pubsub-services-to-check.topicName)
 
   - name: func-WorkInProgress
     type: cloud-function.jinja

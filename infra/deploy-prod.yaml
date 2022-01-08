@@ -161,7 +161,7 @@ resources:
       parent: projects/$(ref.pubsub-all-services-checks.projectId)/locations/europe-central2
       name: call-function-job
       description: "Calls MonitorAllServices function"
-      schedule: "* * * * *" # daily at 2 am
+      schedule: "*/7 * * * *" # daily at 2 am
       timeZone: "Europe/Amsterdam"
       pubsubTarget:
         topicName: projects/$(ref.pubsub-all-services-checks.projectId)/topics/$(ref.pubsub-all-services-checks.topicName)

@@ -152,3 +152,17 @@ resources:
         DB_USERNAME: services_user  # FIXME: Handle credentials
         DB_PASSWORD: services_password  # FIXME: Handle credentials
         DB_DATABASE: services-db  # FIXME: Handle credentials
+
+  # Cloud Scheduler
+
+  - type: gcp-types/cloudscheduler-v1:projects.locations.jobs
+      name: call-function-job
+      properties:
+        parent: projects/$(ref.pubsub-all-services-checks.projectId)/locations/europe-central2
+        name: call-function-job
+        description: "Calls MonitorAllServices function"
+        schedule: "* * * * *" # daily at 2 am
+        timeZone: "Europe/Amsterdam"
+        pubsubTarget:
+          topicName: projects/$(ref.pubsub-all-services-checks.projectId)/topics/$(ref.pubsub-all-services-checks.topicName)
+          data: aGVsbG8hCg== # base64 encoded "hello!"

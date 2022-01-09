@@ -16,6 +16,7 @@ resources:
         - pubsub.googleapis.com
         - sqladmin.googleapis.com
         - cloudtasks.googleapis.com
+        - cloudscheduler.googleapis.com
 
   # Cloud SQL
   - name: services-instance  # This name will be unavailable for a week if you delete instance
@@ -157,9 +158,12 @@ resources:
         DB_DATABASE: services-db  # FIXME: Handle credentials
 
   # Cloud Scheduler
-
   - name: call-function-job
     type: gcp-types/cloudscheduler-v1:projects.locations.jobs
+    metadata:
+      dependsOn:
+        - pubsub-all-services-checks
+        - func-MonitorAllServices
     properties:
       parent: projects/$(ref.pubsub-all-services-checks.projectId)/locations/europe-central2
       name: call-function-job

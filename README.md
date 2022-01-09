@@ -18,6 +18,12 @@
     ```
     gcloud deployment-manager deployments update prod --config infra/deploy-prod.yaml
     ```
+    It may also fail due to the insufficient permissions of a service account used by Deployment Manager to create App Engine application. In this case, you should add Owner permissions to `[PROJECT_NUMBER]@cloudservices.gserviceaccount.com` service account:
+    ```
+    gcloud projects add-iam-policy-binding [PROJECT_ID] \
+        --member=serviceAccount:[PROJECT_NUMBER]@cloudservices.gserviceaccount.com --role=roles/owner
+    ```
+
 5. Enable public access to `WorkInProgress`:
     ```bash
     # `region` has to match the one of the function

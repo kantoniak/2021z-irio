@@ -108,10 +108,11 @@ resources:
         DB_PASSWORD: services_password  # FIXME: Handle credentials
         DB_DATABASE: services-db  # FIXME: Handle credentials
         REQUEST_TIMEOUT_SEC: "3"
-        ALERTING_WINDOW_SEC: "10"
+        ALERTING_WINDOW_SEC: "150"
         QUEUE_NAME: scheduled-tasks-queue
         REGION: $(ref.func-MonitorSpecificService.funcRegion)
         FUNC_TO_CALL: $(ref.func-InformSecondaryAdmin.funcName)
+        FUNC_TO_MARK_AS_BEING_WORKED_ON: $(ref.func-WorkInProgress.funcName)
         ALLOWED_RESPONSE_TIME: "60" # In seconds
         PROJECT_NAME: $(ref.pubsub-services-to-check.projectId)
 
@@ -173,7 +174,7 @@ resources:
       dependsOn:
         - pubsub-all-services-checks
         - func-MonitorAllServices
-        - appengine-app
+        # - appengine-app
     properties:
       parent: projects/$(ref.pubsub-all-services-checks.projectId)/locations/europe-central2
       name: call-function-job

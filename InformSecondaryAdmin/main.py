@@ -63,7 +63,7 @@ def send_mail(recipient, service_name):
             }
         ]
     }
-
+    logger.info("Email sent to secondary admin {} about {}.".format(recipient, service_name))
     result = MAILJET.send.create(data=data)
     return result.json()
 
@@ -93,5 +93,7 @@ def entrypoint(request):
         secondary_admin_email = service["secondary_admin_email"]
         if service["being_worked_on"] == False:
             send_mail(secondary_admin_email, service["name"])
+        else:
+            logger.info("Primary administrator acknowledged the issue, we don't need to send any more emails.")
 
     return f'Hello World'

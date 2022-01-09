@@ -25,6 +25,7 @@ DB_DATABASE = os.getenv('DB_DATABASE')
 QUEUE_NAME = os.getenv('QUEUE_NAME')
 REGION = os.getenv('REGION')
 FUNC_TO_CALL = os.getenv('FUNC_TO_CALL')
+FUNC_TO_MARK_AS_BEING_WORKED_ON = os.getenv('FUNC_TO_MARK_AS_BEING_WORKED_ON')
 PROJECT = os.getenv('PROJECT_NAME')
 
 ALLOWED_RESPONSE_TIME = os.getenv('ALLOWED_RESPONSE_TIME')
@@ -45,6 +46,8 @@ if REGION is None:
     raise RuntimeError('Missing environment variable: REGION')
 if FUNC_TO_CALL is None:
     raise RuntimeError('Missing environment variable: FUNC_TO_CALL')
+if FUNC_TO_MARK_AS_BEING_WORKED_ON is None:
+    raise RuntimeError('Missing environment variable: FUNC_TO_MARK_AS_BEING_WORKED_ON')
 if PROJECT is None:
     raise RuntimeError('Missing environment variable: PROJECT')
 
@@ -64,11 +67,14 @@ if ALERTING_WINDOW_SEC is None:
 else:
   ALERTING_WINDOW_SEC = int(ALERTING_WINDOW_SEC)
 
+def get_func_qualified_URL(func_name):
+    return "https://" + REGION + "-" + PROJECT + ".cloudfunctions.net/" + func_name
+
 api_key = '13bde1f003f14dfe019284c8839ec9fa' # TODO : fix this
 api_secret = '4e64b4ac3672eec18b0fbdc4d79a1817' # TODO : fix this
 MY_MAIL = "automatedmailer@protonmail.com"
 MAILJET = Client(auth=(api_key, api_secret), version='v3.1')
-def send_mail(recipient, service_name):
+def send_mail(recipient, service_key, service_name):
     data = {
         "Messages": [
             {
@@ -78,13 +84,13 @@ def send_mail(recipient, service_name):
                 },
                 "To": [{"Email": recipient, "Name": recipient}],
                 "Subject": "Warning, service is down",
-                "TextPart": "Warning, service {} is down!".format(service_name),
+                "TextPart": "Warning, service {} is down! Click this link to begin working on this issue: {}".format(service_name, get_func_qualified_URL(FUNC_TO_MARK_AS_BEING_WORKED_ON) + "?key=" + service_key),
                 "HTMLPart": "",
                 "CustomID": "",
             }
         ]
     }
-
+    logger.info('Email sent to primary admin {} regarding {}.'.format(recipient, service_name))
     result = MAILJET.send.create(data=data)
     return result.json()
 
@@ -147,7 +153,7 @@ CREATE TABLE IF NOT EXISTS "services" (
 
 def handle_service_up(service, conn):
     conn.execute(
-        text("UPDATE services SET last_time_responsive = :datetime WHERE id = :id"),
+        text("UPDATE services SET last_time_responsive = :datetime, primary_admin_key = NULL WHERE id = :id"),
         {
             'id': service['id'],
             'datetime': datetime.datetime.now()
@@ -158,11 +164,14 @@ def handle_service_up(service, conn):
 def handle_service_down(service, conn):
     time_now = datetime.datetime.now()
 
-    since_last_check = (time_now - service['last_time_responsive']).total_seconds()
+    if not service['last_time_responsive']:
+        logger.warn("Service {} has not been up yet.".format(service['name']))
+        since_last_check = ALERTING_WINDOW_SEC + 1
+    else:
+        since_last_check = (time_now - service['last_time_responsive']).total_seconds()
+    
     if since_last_check > ALERTING_WINDOW_SEC:
-        new_incident = True  # FIXME: How do we know current downtime had/had not been detected?
-
-        if new_incident:
+        if service["primary_admin_key"] == None:
             service_name = service['name']
             logger.info(f'Service "{service_name}" down.')
             service_id = service['id']
@@ -175,7 +184,7 @@ def handle_service_down(service, conn):
                     'primary_key': primary_key
                 }
             )
-            send_mail(service['primary_admin_email'], service_name)
+            send_mail(service['primary_admin_email'], primary_key, service_name)
             schedule_task(service_id, ALLOWED_RESPONSE_TIME)
 
 def entrypoint(event, _):
@@ -198,7 +207,7 @@ def entrypoint(event, _):
 
         # Fetch service details
         service = conn.execute(
-            text("SELECT id, name, url, last_time_responsive, primary_admin_email, secondary_admin_email FROM services WHERE id = :id"),
+            text("SELECT id, name, url, last_time_responsive, primary_admin_email, secondary_admin_email, primary_admin_key FROM services WHERE id = :id"),
             { 'id': service_id }
         ).fetchone()
 
@@ -207,10 +216,6 @@ def entrypoint(event, _):
 
         url = service['url']
         name = service['name']
-
-        if not service['last_time_responsive']:
-            logger.warn(f'Service "{name}" has not been up yet.')
-            return
 
         # Check if service up
         try:

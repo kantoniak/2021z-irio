@@ -17,6 +17,7 @@ resources:
         - sqladmin.googleapis.com
         - cloudtasks.googleapis.com
         - cloudscheduler.googleapis.com
+        - appengine.googleapis.com
 
   # Cloud SQL
   - name: services-instance  # This name will be unavailable for a week if you delete instance
@@ -158,12 +159,21 @@ resources:
         DB_DATABASE: services-db  # FIXME: Handle credentials
 
   # Cloud Scheduler
+
+  - name: appengine-app # App Engine app is required to use Cloud Scheduler
+    type: gcp-types/appengine-v1:apps
+    properties:
+      id: $(ref.pubsub-all-services-checks.projectId)
+      servicesId:
+      locationId: europe-central2
+
   - name: call-function-job
     type: gcp-types/cloudscheduler-v1:projects.locations.jobs
     metadata:
       dependsOn:
         - pubsub-all-services-checks
         - func-MonitorAllServices
+        - appengine-app
     properties:
       parent: projects/$(ref.pubsub-all-services-checks.projectId)/locations/europe-central2
       name: call-function-job

@@ -49,8 +49,8 @@ resources:
         - services-db
     properties:
       instance: $(ref.services-instance.name)
-      name: services_user  # FIXME: Handle credentials
-      password: services_password  # FIXME: Handle credentials
+      name: __DB_USERNAME_NOT_YET_PRESENT 
+      password: __DB_PASSWORD_NOT_YET_PRESENT 
       host: "%"
 
   # Pub/Sub
@@ -76,6 +76,7 @@ resources:
       dependsOn:
         - services-instance
         - services-user
+        - enable-apis
     properties:
       function: InformSecondaryAdmin
       region: europe-central2
@@ -85,9 +86,9 @@ resources:
       httpsSecurityLevel: SECURE_ALWAYS
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
-        DB_USERNAME: services_user  # FIXME: Handle credentials
-        DB_PASSWORD: services_password  # FIXME: Handle credentials
-        DB_DATABASE: services-db  # FIXME: Handle credentials
+        DB_USERNAME: __DB_USERNAME_NOT_YET_PRESENT 
+        DB_PASSWORD: __DB_PASSWORD_NOT_YET_PRESENT 
+        DB_DATABASE: __DB_DATABASE_NOT_YET_PRESENT 
 
   - name: func-MonitorSpecificService
     type: cloud-function.jinja
@@ -104,17 +105,17 @@ resources:
       inputTopic: $(ref.pubsub-services-to-check.topicName)
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
-        DB_USERNAME: services_user  # FIXME: Handle credentials
-        DB_PASSWORD: services_password  # FIXME: Handle credentials
-        DB_DATABASE: services-db  # FIXME: Handle credentials
-        REQUEST_TIMEOUT_SEC: "3"
-        ALERTING_WINDOW_SEC: "150"
+        DB_USERNAME: __DB_USERNAME_NOT_YET_PRESENT 
+        DB_PASSWORD: __DB_PASSWORD_NOT_YET_PRESENT 
+        DB_DATABASE: __DB_DATABASE_NOT_YET_PRESENT 
         QUEUE_NAME: scheduled-tasks-queue
         REGION: $(ref.func-MonitorSpecificService.funcRegion)
         FUNC_TO_CALL: $(ref.func-InformSecondaryAdmin.funcName)
         FUNC_TO_MARK_AS_BEING_WORKED_ON: $(ref.func-WorkInProgress.funcName)
-        ALLOWED_RESPONSE_TIME: "60" # In seconds
         PROJECT_NAME: $(ref.pubsub-services-to-check.projectId)
+        ALLOWED_RESPONSE_TIME: "60" # In seconds
+        REQUEST_TIMEOUT_SEC: "3"
+        ALERTING_WINDOW_SEC: "150"
 
   - name: func-MonitorAllServices
     type: cloud-function.jinja
@@ -132,9 +133,9 @@ resources:
       inputTopic: $(ref.pubsub-all-services-checks.topicName)
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
-        DB_USERNAME: services_user  # FIXME: Handle credentials
-        DB_PASSWORD: services_password  # FIXME: Handle credentials
-        DB_DATABASE: services-db  # FIXME: Handle credentials
+        DB_USERNAME: __DB_USERNAME_NOT_YET_PRESENT 
+        DB_PASSWORD: __DB_PASSWORD_NOT_YET_PRESENT 
+        DB_DATABASE: __DB_DATABASE_NOT_YET_PRESENT 
         QUEUE_NAME: scheduled-tasks-queue
         REGION: $(ref.func-MonitorSpecificService.funcRegion)
         PROJECT_NAME: $(ref.pubsub-all-services-checks.projectId)
@@ -155,9 +156,9 @@ resources:
       httpsSecurityLevel: SECURE_ALWAYS
       environmentVariables:
         DB_CONN_NAME: $(ref.services-instance.connectionName)
-        DB_USERNAME: services_user  # FIXME: Handle credentials
-        DB_PASSWORD: services_password  # FIXME: Handle credentials
-        DB_DATABASE: services-db  # FIXME: Handle credentials
+        DB_USERNAME: __DB_USERNAME_NOT_YET_PRESENT 
+        DB_PASSWORD: __DB_PASSWORD_NOT_YET_PRESENT 
+        DB_DATABASE: __DB_DATABASE_NOT_YET_PRESENT 
 
   # Cloud Scheduler
 

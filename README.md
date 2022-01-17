@@ -10,21 +10,33 @@
     git remote add google https://source.developers.google.com/p/<project>/r/alerting-platform
     git push --all google
     ```
-4. Deploy with Google Deployment Manager:
+4. Contact us for a key to decrypt the file(this file might not be present in repository for security reasons). 
+For convenience reasons it will be posted here: `4d5c0d87-9dc9-43fe-b3ca-52688e866006`
+
+5. Deploy with Google Deployment Manager:
+    First, you need to update the preexisting config with data(to do this step you will need the afromentioned key)
     ```
-    gcloud deployment-manager deployments create prod --config infra/deploy-prod.yaml
+    chmod +x ./update_config.sh && ./update_config.sh
+    ```
+    After that, run this command to create the project
+    ```
+    gcloud deployment-manager deployments create prod --config infra/deploy-prod-updated.yaml
     ```
     Deployment may fail if information about just enables API don't propagate immediately. In such case, wait a few minutes and update deployment to create missing resources:
     ```
-    gcloud deployment-manager deployments update prod --config infra/deploy-prod.yaml
+    gcloud deployment-manager deployments update prod --config infra/deploy-prod-updated.yaml
     ```
     It may also fail due to the insufficient permissions of a service account used by Deployment Manager to create App Engine application. In this case, you should add Owner permissions to `[PROJECT_NUMBER]@cloudservices.gserviceaccount.com` service account:
     ```
     gcloud projects add-iam-policy-binding [PROJECT_ID] \
         --member=serviceAccount:[PROJECT_NUMBER]@cloudservices.gserviceaccount.com --role=roles/owner
     ```
+    ** IMPORTANT **
 
-5. Enable public access to `WorkInProgress`:
+    After you've successfully deployed the project, delete `infra/deploy-prod-updated.yaml`. Not doing it poses a security risk!
+
+
+6. Enable public access to `WorkInProgress`:
     ```bash
     # `region` has to match the one of the function
     gcloud functions add-iam-policy-binding WorkInProgress \

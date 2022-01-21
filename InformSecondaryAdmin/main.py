@@ -13,6 +13,9 @@ DB_USERNAME = os.getenv('DB_USERNAME')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_DATABASE = os.getenv('DB_DATABASE')
 
+API_KEY = os.getenv('API_KEY')
+API_SECRET = os.getenv('API_SECRET')
+
 if DB_CONN_NAME is None:
   raise RuntimeError('Missing environment variable: DB_CONN_NAME')
 if DB_USERNAME is None:
@@ -21,6 +24,10 @@ if DB_PASSWORD is None:
   raise RuntimeError('Missing environment variable: DB_PASSWORD')
 if DB_DATABASE is None:
   raise RuntimeError('Missing environment variable: DB_DATABASE')
+if API_KEY is None:
+    raise RuntimeError('Missing environment variable: API_KEY')
+if API_SECRET is None:
+    raise RuntimeError('Missing environment variable: API_SECRET')
 
 # TODO : this is a straight-up copy pasta from WorkInProgress.py, there should be a better way to do this
 def init_pool(conn_name, username, password, database):
@@ -43,10 +50,8 @@ def init_pool(conn_name, username, password, database):
     return pool
 
 # TODO : this is also a copy-pasta
-api_key = '13bde1f003f14dfe019284c8839ec9fa' # TODO : fix this
-api_secret = '4e64b4ac3672eec18b0fbdc4d79a1817' # TODO : fix this
 MY_MAIL = "automatedmailer@protonmail.com"
-MAILJET = Client(auth=(api_key, api_secret), version='v3.1')
+MAILJET = Client(auth=(API_KEY, API_SECRET), version='v3.1')
 def send_mail(recipient, service_name):
     data = {
         "Messages": [

@@ -8,7 +8,6 @@ import time
 import uuid
 from google.cloud import logging as cloudlogging
 from sqlalchemy.sql import text
-from mailjet_rest import Client
 from google.cloud import tasks_v2
 from google.cloud import pubsub_v1
 import json

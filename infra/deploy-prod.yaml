@@ -89,6 +89,8 @@ resources:
         DB_USERNAME: __DB_USERNAME_NOT_YET_PRESENT 
         DB_PASSWORD: __DB_PASSWORD_NOT_YET_PRESENT 
         DB_DATABASE: __DB_DATABASE_NOT_YET_PRESENT 
+        API_KEY: __API_KEY_NOT_YET_PRESENT
+        API_SECRET: __API_SECRET_NOT_YET_PRESENT
 
   - name: func-MonitorSpecificService
     type: cloud-function.jinja
@@ -116,6 +118,8 @@ resources:
         ALLOWED_RESPONSE_TIME: "60" # In seconds
         REQUEST_TIMEOUT_SEC: "3"
         ALERTING_WINDOW_SEC: "150"
+        API_KEY: __API_KEY_NOT_YET_PRESENT
+        API_SECRET: __API_SECRET_NOT_YET_PRESENT
 
   - name: func-MonitorAllServices
     type: cloud-function.jinja

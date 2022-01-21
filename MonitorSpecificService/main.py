@@ -28,6 +28,9 @@ FUNC_TO_CALL = os.getenv('FUNC_TO_CALL')
 FUNC_TO_MARK_AS_BEING_WORKED_ON = os.getenv('FUNC_TO_MARK_AS_BEING_WORKED_ON')
 PROJECT = os.getenv('PROJECT_NAME')
 
+API_KEY = os.getenv('API_KEY')
+API_SECRET = os.getenv('API_SECRET')
+
 ALLOWED_RESPONSE_TIME = os.getenv('ALLOWED_RESPONSE_TIME')
 REQUEST_TIMEOUT_SEC = os.getenv('REQUEST_TIMEOUT_SEC')
 ALERTING_WINDOW_SEC = os.getenv('ALERTING_WINDOW_SEC')
@@ -50,6 +53,10 @@ if FUNC_TO_MARK_AS_BEING_WORKED_ON is None:
     raise RuntimeError('Missing environment variable: FUNC_TO_MARK_AS_BEING_WORKED_ON')
 if PROJECT is None:
     raise RuntimeError('Missing environment variable: PROJECT')
+if API_KEY is None:
+    raise RuntimeError('Missing environment variable: API_KEY')
+if API_SECRET is None:
+    raise RuntimeError('Missing environment variable: API_SECRET')
 
 
 if ALLOWED_RESPONSE_TIME is None:
@@ -70,10 +77,8 @@ else:
 def get_func_qualified_URL(func_name):
     return "https://" + REGION + "-" + PROJECT + ".cloudfunctions.net/" + func_name
 
-api_key = '13bde1f003f14dfe019284c8839ec9fa' # TODO : fix this
-api_secret = '4e64b4ac3672eec18b0fbdc4d79a1817' # TODO : fix this
 MY_MAIL = "automatedmailer@protonmail.com"
-MAILJET = Client(auth=(api_key, api_secret), version='v3.1')
+MAILJET = Client(auth=(API_KEY, API_SECRET), version='v3.1')
 def send_mail(recipient, service_key, service_name):
     data = {
         "Messages": [

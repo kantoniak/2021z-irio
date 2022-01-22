@@ -66,3 +66,11 @@ gcloud pubsub topics publish services-to-check --message="<service-id>"
 ```
 
 To acknowledge incident as primary admin, make an HTTP request to `https://<region>-<project>.cloudfunctions.net/WorkInProgress?key=<key>`.
+
+## Testing
+
+To run unit tests use the following commands in the root directory:
+```bash
+. ./set_test_env.sh
+pytest
+```

@@ -1,0 +1,8 @@
+DB_CONN_NAME=services-instance
+DB_USERNAME=services_user
+DB_PASSWORD=services_password
+DB_DATABASE=services-db
+QUEUE_NAME=scheduled-tasks-queue
+REGION=europe-central2
+PROJECT_NAME=irio-private-337522
+PUBSUB_TOPIC=services-to-check

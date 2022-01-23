@@ -23,6 +23,42 @@ resources:
       ingressSettings: {{ properties['ingressSettings'] }}
       {% endif %}
     
+  # Cloud Function Developer role on this function for the Cloud Build service account.
+  # Cloud Build service account should also have the Service Account User role on serviceAccount:{{ env['project'] }}@appspot.gserviceaccount.com.
+  - name: iam-funcdev-{{ properties['function'] }}
+    type: gcp-types/cloudfunctions-v1:virtual.projects.locations.functions.iamMemberBinding
+    properties:
+      resource: $(ref.func-{{ properties['function'] }}.name)
+      member: serviceAccount:{{ env['project_number'] }}@cloudbuild.gserviceaccount.com
+      role: roles/cloudfunctions.developer
+
+  # Build trigger for this function
+  - name: build-func-{{ properties['function'] }}
+    type: gcp-types/cloudbuild-v1:projects.triggers
+    properties:
+      name: build-{{ properties['function'] | replace('_', '') }}
+      triggerTemplate:
+        repoName: {{ properties['repo'] }}
+        branchName: main
+      includedFiles:
+        - "{{ properties['repoPath'] }}/**"
+      build:
+        steps:
+          - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+            args:
+              - gcloud
+              - functions
+              - deploy
+              - {{ properties['function'] }}
+              - --region={{ properties['region'] }}
+              {% if properties['httpsSecurityLevel'] is defined %}
+              - --trigger-http
+              {% elif properties['inputTopic'] is defined %}
+              - --trigger-topic={{ properties['inputTopic'] }}
+              {% endif %}
+              - --source={{ properties['repoPath'] }}
+              - --runtime=python39
+
 outputs:
     - name: funcRegion
       value: {{ properties['region'] }}

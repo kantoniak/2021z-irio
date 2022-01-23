@@ -26,7 +26,7 @@ For convenience reasons it will be posted here: `4d5c0d87-9dc9-43fe-b3ca-52688e8
     ```
     gcloud deployment-manager deployments update prod --config infra/deploy-prod-updated.yaml
     ```
-    It may also fail due to the insufficient permissions of a service account used by Deployment Manager to create App Engine application. In this case, you should add Owner permissions to `[PROJECT_NUMBER]@cloudservices.gserviceaccount.com` service account:
+    It may also fail due to the insufficient permissions of a service account used by Deployment Manager to create App Engine application or to assign IAM roles (see `infra/cloud-function.jinja`). In this case, you should add Owner permissions to `[PROJECT_NUMBER]@cloudservices.gserviceaccount.com` service account:
     ```
     gcloud projects add-iam-policy-binding [PROJECT_ID] \
         --member=serviceAccount:[PROJECT_NUMBER]@cloudservices.gserviceaccount.com --role=roles/owner

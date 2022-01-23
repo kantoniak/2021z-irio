@@ -29,7 +29,6 @@ if API_KEY is None:
 if API_SECRET is None:
     raise RuntimeError('Missing environment variable: API_SECRET')
 
-# TODO : this is a straight-up copy pasta from WorkInProgress.py, there should be a better way to do this
 def init_pool(conn_name, username, password, database):
     pool = sqlalchemy.create_engine(
         sqlalchemy.engine.url.URL.create(
@@ -41,15 +40,14 @@ def init_pool(conn_name, username, password, database):
                 "unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(conn_name)
             }
         ),
-        pool_size=5,
-        max_overflow=2,
+        pool_size=1,
+        max_overflow=1,
         pool_timeout=30,
         pool_recycle=1800
     )
     pool.dialect.description_encoding = None
     return pool
 
-# TODO : this is also a copy-pasta
 MY_MAIL = "automatedmailer@protonmail.com"
 MAILJET = Client(auth=(API_KEY, API_SECRET), version='v3.1')
 def send_mail(recipient, service_name):

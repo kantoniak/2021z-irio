@@ -119,6 +119,7 @@ def schedule_task(service_id, delay):
         },
         'schedule_time': datetime.datetime.now() + datetime.timedelta(seconds=delay) 
     }
+    logger.info('Scheduled notifying second admin regarding service nr {}.'.format(service_id))
     return client.create_task(request={"parent": parent, "task": task})
 
 
@@ -133,8 +134,8 @@ def init_pool(conn_name, username, password, database):
                 "unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(conn_name)
             }
         ),
-        pool_size=5,
-        max_overflow=2,
+        pool_size=1,
+        max_overflow=1,
         pool_timeout=30,
         pool_recycle=1800
     )

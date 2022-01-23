@@ -51,8 +51,8 @@ def init_pool(conn_name, username, password, database):
                 "unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(conn_name)
             }
         ),
-        pool_size=5,
-        max_overflow=2,
+        pool_size=1,
+        max_overflow=1,
         pool_timeout=30,
         pool_recycle=1800
     )

@@ -42,6 +42,7 @@ def test_entrypoint_199(initialize_db, init_pool, get_request, handle_service_do
     handle_service_down.assert_called_once()
     handle_service_up.assert_not_called()
 
+
 @patch('main.handle_service_up')
 @patch('main.handle_service_down')
 @patch('requests.get', return_value=response)
@@ -85,4 +86,3 @@ def test_entrypoint_timeout(initialize_db, init_pool, get_request, handle_servic
     get_request.assert_called_once_with(service['url'], allow_redirects=ANY, timeout=ANY)
     handle_service_down.assert_called_once()
     handle_service_up.assert_not_called()
-

@@ -77,7 +77,7 @@ def entrypoint(request):
         raise RuntimeError("Request was empty")
 
     request_json = request.get_json()
-    
+
     service_id = request_json["service_id"]
 
     db = init_pool(

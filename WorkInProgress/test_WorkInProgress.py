@@ -43,29 +43,25 @@ def test_entrypoint_no_uuid_in_key(render_response, init_pool):
 
 
 @patch('main.init_pool', return_value=db)
-@patch('main.initialize_db')
 @patch('uuid.UUID')
 @patch('main.render_response')
-def test_entrypoint_no_service(render_response, uuid, initialize_db, init_pool):
+def test_entrypoint_no_service(render_response, uuid, init_pool):
     request.args.get.return_value = '123'
     conn_execute_return.fetchone.return_value = None
     entrypoint(request)
     init_pool.assert_called_once()
-    initialize_db.assert_called_once_with(conn)
     render_response.assert_called_once_with('No service with such key')
     conn.execute.assert_called_once()
 
 
 @patch('main.init_pool', return_value=db)
-@patch('main.initialize_db')
 @patch('uuid.UUID')
 @patch('main.render_response')
-def test_entrypoint_correct(render_response, uuid, initialize_db, init_pool):
+def test_entrypoint_correct(render_response, uuid, init_pool):
     request.args.get.return_value = '123'
     conn_execute_return.fetchone.return_value = service
     entrypoint(request)
     init_pool.assert_called_once()
-    initialize_db.assert_called_once_with(conn)
     render_response.assert_called_once_with('Downtime acknowledged')
 
 

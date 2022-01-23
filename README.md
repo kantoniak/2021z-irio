@@ -31,7 +31,7 @@ For convenience reasons it will be posted here: `4d5c0d87-9dc9-43fe-b3ca-52688e8
     gcloud projects add-iam-policy-binding [PROJECT_ID] \
         --member=serviceAccount:[PROJECT_NUMBER]@cloudservices.gserviceaccount.com --role=roles/owner
     ```
-    ** IMPORTANT **
+    **IMPORTANT**
 
     After you've successfully deployed the project, delete `infra/deploy-prod-updated.yaml`. Not doing it poses a security risk!
 
@@ -69,13 +69,15 @@ To acknowledge incident as primary admin, make an HTTP request to `https://<regi
 
 ## Testing
 
-To run unit tests use the following commands in the root directory:
+### To run unit tests
+Use the following commands in the root directory:
 ```bash
 . ./test.sh
 ```
 
-To run stress/load tests:
+### To run stress/load tests:
 0. Build the project using the afromentioned way.
+
 1. After, you need to build the mockup service. 
 ```bash
 cd mockup_service
@@ -83,6 +85,7 @@ gcloud app deploy
 cd ..
 ```
 At this point there should be an application listening on `https://[PROJECT_ID].appspot.com/ping`
+
 2. Use the following commands in the root directory:
 ```bash
 . ./set_test_env.sh # Set enviromental variables, you might want to tinker some of those if neccessary

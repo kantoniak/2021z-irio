@@ -71,6 +71,5 @@ To acknowledge incident as primary admin, make an HTTP request to `https://<regi
 
 To run unit tests use the following commands in the root directory:
 ```bash
-. ./set_test_env.sh
-pytest
+. ./test.sh
 ```

@@ -69,7 +69,12 @@ To acknowledge incident as primary admin, make an HTTP request to `https://<regi
 
 ## Testing
 
-To run unit tests use the following commands in the root directory:
+To run unit tests we need to install necessary packages first:
+```commandline
+pip install -r requirements.txt
+```
+
+Then we can actually run the tests:
 ```bash
 . ./test.sh
 ```

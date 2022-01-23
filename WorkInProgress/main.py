@@ -35,29 +35,13 @@ def init_pool(conn_name, username, password, database):
                 "unix_sock": "/cloudsql/{}/.s.PGSQL.5432".format(conn_name)
             }
         ),
-        pool_size=5,
-        max_overflow=2,
+        pool_size=1,
+        max_overflow=1,
         pool_timeout=30,
         pool_recycle=1800
     )
     pool.dialect.description_encoding = None
     return pool
-
-
-# FIXME: Move to MonitorAllServices once created
-def initialize_db(conn):
-    conn.execute("""
-CREATE TABLE IF NOT EXISTS "services" (
-    "id" INT NOT NULL,
-    "name" VARCHAR(256) NOT NULL,
-    "url" TEXT NOT NULL,
-    "primary_admin_email" VARCHAR(254) NOT NULL,
-    "secondary_admin_email" VARCHAR(254) NOT NULL,
-    "last_time_responsive" TIMESTAMP NULL,
-    "being_worked_on" BOOLEAN NOT NULL DEFAULT FALSE,
-    "primary_admin_key" UUID NULL,
-    CONSTRAINT "services_pk" PRIMARY KEY (id)
-);""")
 
 
 def render_response(message):
@@ -84,7 +68,6 @@ def entrypoint(request):
     )
 
     with db.connect() as conn:
-        initialize_db(conn)
 
         # Fetch matching service
         service = conn.execute(

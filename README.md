@@ -31,6 +31,10 @@ For convenience reasons it will be posted here: `4d5c0d87-9dc9-43fe-b3ca-52688e8
     gcloud projects add-iam-policy-binding [PROJECT_ID] \
         --member=serviceAccount:[PROJECT_NUMBER]@cloudservices.gserviceaccount.com --role=roles/owner
     ```
+   Then you should update the deployment again:
+   ```
+    gcloud deployment-manager deployments update prod --config infra/deploy-prod-updated.yaml
+    ```
     **IMPORTANT**
 
     After you've successfully deployed the project, delete `infra/deploy-prod-updated.yaml`. Not doing it poses a security risk!
@@ -40,7 +44,7 @@ For convenience reasons it will be posted here: `4d5c0d87-9dc9-43fe-b3ca-52688e8
     ```bash
     # `region` has to match the one of the function
     gcloud functions add-iam-policy-binding WorkInProgress \
-      --region="europe-central2"
+      --region="europe-central2" \
       --member="allUsers" \
       --role="roles/cloudfunctions.invoker"
     ```
@@ -73,7 +77,7 @@ To acknowledge incident as primary admin, make an HTTP request to `https://<regi
 
 To run unit tests we need to install necessary packages first:
 ```commandline
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 Then we can actually run the tests:

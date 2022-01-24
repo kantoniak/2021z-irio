@@ -97,11 +97,9 @@ if __name__ == "__main__":
         with open("uuids.txt", 'r') as file:
             uuids = file.read()
             uuids = uuids.split(",")
-        print(NOTIFYING_URL)
         requests.get(
             MOCK_PAGE + "/manage/turnOn",
         )
-        print(MOCK_PAGE + "/manage/turnOn")
         print("Mock service is up and running. Waiting for functions to see that")
         time.sleep(2 * FREQUENCY)
         requests.get(

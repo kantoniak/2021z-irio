@@ -76,8 +76,9 @@ def entrypoint(request):
         ).fetchone()
         
         if not service:
+            logger.info("No service was recognized with a key {}".format(key))
             return render_response('No service with such key')
-
+            
         service_name = service['name']
         admin_email = service['primary_admin_email']
         logging.info(f'Admin {admin_email} acknowledged downtime of service {service_name}')

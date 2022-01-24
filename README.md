@@ -82,7 +82,7 @@ Then we can actually run the tests:
 ```
 
 ### To run stress/load tests:
-0. Build the project using the afromentioned way.
+0. Build the project using the afromentioned way. Change any values in `deploy-prod-updated.yaml` if you want to use different credential values. Just be wary, you need to also change them in the `test_env` file. 
 
 1. After, you need to build the mockup service. 
 ```bash
@@ -115,3 +115,7 @@ python3 ./Tests/stress_test.py 1
 And wait. When the application has finished, check the dashboards in your project to see how did the functions behave under the `desired_pool` load. Especially important are `Invocations/second` - for seeing how many invocations end with a success and `Execution time` - for seeing how fast are we running our functions.
 
 Exact values of `desired_pool` for load/stress testing must be constructed with an expected load in mind - which we don't know currently.
+
+
+## Final remarks
+If the need arises, you might need to increase the number of maximum connections to the database. To do so, go to Cloud SQL -> Click on the DB -> Edit -> Flags -> Max connections - choose an appropriate number. Related link https://stackoverflow.com/questions/51084907/how-to-increase-the-connection-limit-for-the-google-cloud-sql-postgres-database
